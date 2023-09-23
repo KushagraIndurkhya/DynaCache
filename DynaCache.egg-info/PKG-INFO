@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: DynaCache
-Version: 0.1.0.1
+Version: 0.1.0.4
 Summary: DynaCache: Effortlessly cache function responses in DynamoDB for lightning-fast, efficient data retrieval.
 Home-page: https://github.com/KushagraIndurkhya/DynaCache
 Author: Kushagra Indurkhya
