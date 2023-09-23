@@ -5,6 +5,7 @@ import yaml
 import time
 from botocore.exceptions import BotoCoreError, ClientError
 from functools import wraps
+import pickle
 
 logger = logging.getLogger(__name__)
 
@@ -56,11 +57,19 @@ class DynamoDBCache:
                     {
                         "AttributeName": "cache_key",
                         "AttributeType": "S"
+                    },
+                    {
+                        "AttributeName": "ttl",
+                        "AttributeType": "N"  # Numeric attribute for TTL
                     }
                 ],
                 ProvisionedThroughput={
                     "ReadCapacityUnits": 5,
                     "WriteCapacityUnits": 5
+                },
+                TimeToLiveSpecification={
+                    "AttributeName": "ttl",  # Specify the TTL attribute name
+                    "Enabled": True           # Enable TTL for the table
                 }
             )
             self.dynamodb.get_waiter('table_exists').wait(TableName=self.cache_table_name)
@@ -82,40 +91,32 @@ class DynamoDBCache:
             @self.handle_aws_exceptions
             @wraps(func)
             def wrapper(*args, **kwargs):
-                # Generate a unique key based on function name and input parameters
-                key = f"{func.__name__}-{json.dumps((args, kwargs))}"
-                # Check if the result is cached
+                key = f"{func.__name__}-{pickle.dumps((args, kwargs))}"
                 response = self.dynamodb.get_item(TableName=self.cache_table_name, Key={"cache_key": {"S": key}})
+                
+                # Check if the cached item exists and if its TTL has expired
                 if "Item" in response:
                     cached_data = response["Item"]["cached_data"]["S"]
-                    return json.loads(cached_data)
+                    ttl = int(response["Item"]["ttl"]["N"])
+                    current_time = int(time.time())
 
-                # If not cached, call the original function
+                    if ttl > current_time:
+                        # Cache is still valid, return the cached data
+                        return pickle.loads(cached_data)
+
+                # If not cached or expired, call the original function
                 result = func(*args, **kwargs)
-                # Cache the result with TTL
+                
+                # Cache the result with a new TTL
                 self.dynamodb.put_item(
                     TableName=self.cache_table_name,
                     Item={
                         "cache_key": {"S": key},
-                        "cached_data": {"S": json.dumps(result)},
-                        "ttl": {"N": str(int(time.time()) + ttl_seconds)}
+                        "cached_data": {"S": pickle.dumps(result)},
+                        "ttl": {"N": str(current_time + ttl_seconds)}
                     }
                 )
-
+                
                 return result
-
             return wrapper
-
         return decorator
-
-
-# if __name__ == "__main__":
-#     cache_instance=DynamoDBCache(cache_table_name="test-Cache",aws_region="ap-south-1")
-#     @cache_instance.cache_response(ttl_seconds=40)
-#     def test(a,b,c):
-#         time.sleep(3)
-#         return a+b+c
-#     d=test(2,3,5)
-#     e=test(2,3,5)
-    
-

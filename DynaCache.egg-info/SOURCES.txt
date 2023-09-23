@@ -1,0 +1,8 @@
+setup.py
+DynaCache/__init__.py
+DynaCache/cache.py
+DynaCache.egg-info/PKG-INFO
+DynaCache.egg-info/SOURCES.txt
+DynaCache.egg-info/dependency_links.txt
+DynaCache.egg-info/requires.txt
+DynaCache.egg-info/top_level.txt
