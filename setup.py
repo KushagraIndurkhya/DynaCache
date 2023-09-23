@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='DynaCache',
-    version='0.1.0.1',
+    version='0.1.0.2',
     description='DynaCache: Effortlessly cache function responses in DynamoDB for lightning-fast, efficient data retrieval.',
     author='Kushagra Indurkhya',
     author_email='kindurkhya7@gmail.com',
