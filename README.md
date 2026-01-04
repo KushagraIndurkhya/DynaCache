@@ -21,13 +21,16 @@ You can install DynaCache using `pip`:
 pip install dynacache
 ```
 
-## Usage
-Below is some sample code using DynaCache:
+## Getting Started
+
+Here's a complete example of how to use DynaCache:
 
 ```python
 from dynacache import DynamoDBCache
 
 # Initialize DynamoDBCache
+# This example uses direct credentials, but you can also use a config file
+# or the default boto3 credential chain. See the "Configuration" section.
 cache = DynamoDBCache(
     cache_table_name="MyCacheTable",
     aws_region="us-east-1",
@@ -39,15 +42,40 @@ cache = DynamoDBCache(
 @cache.cache_response(ttl_seconds=3600)  # Cache results for 1 hour
 def expensive_function(x, y):
     # Your expensive computation here
+    print(f"Executing expensive_function({x}, {y})")
     return x + y
 
 # Call the cached function
-result = expensive_function(3, 4)  # The result is cached for subsequent calls
+# The first call will execute the function and cache the result.
+result1 = expensive_function(3, 4)
+print(f"Result 1: {result1}")
 
+# The second call with the same arguments will return the cached result
+# without executing the function again.
+result2 = expensive_function(3, 4)
+print(f"Result 2: {result2}")
 ```
 
-### Configuration
-You can configure DynaCache by providing AWS credentials and region directly, or by using a configuration file. Here's how to set up the configuration file:
+## Configuration
+
+There are three ways to configure DynaCache:
+
+### 1. Direct Parameters
+
+You can provide AWS credentials and region directly to the `DynamoDBCache` constructor:
+
+```python
+cache = DynamoDBCache(
+    cache_table_name="MyCacheTable",
+    aws_region="us-east-1",
+    aws_access_key_id="your-access-key",
+    aws_secret_access_key="your-secret-key"
+)
+```
+
+### 2. YAML Configuration File
+
+You can use a YAML configuration file to store your AWS credentials and region. Create a file named `config.yaml`:
 
 ```yaml
 # config.yaml
@@ -55,20 +83,28 @@ aws_region: us-east-1
 aws_access_key_id: your-access-key
 aws_secret_access_key: your-secret-key
 ```
-Then, you can initialize DynamoDBCache using this configuration file:
+
+Then, initialize `DynamoDBCache` with the path to the configuration file:
 
 ```python
 cache = DynamoDBCache(cache_table_name="MyCacheTable", config_file="config.yaml")
-
 ```
 
-### Default boto setup
+### 3. Default Boto3 Setup
 
-If no AWS credentials are provided, DynaCache will try to use the default credential chain provided by boto3. This means it will look for credentials in the environment variables, shared credentials file, EC2 IAM role etc. For more information, see [Boto3 documentation](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#credentials).
+If no AWS credentials are provided, DynaCache will use the default credential chain provided by `boto3`. This means it will look for credentials in environment variables, shared credentials files (`~/.aws/credentials`), and EC2 IAM roles. For more information, see the [Boto3 documentation](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#credentials).
 
-## License
-DynaCache is released under the MIT license.
-See LICENSE for more details.
+```python
+cache = DynamoDBCache(cache_table_name="MyCacheTable", aws_region="us-east-1")
+```
+
+## Running Tests
+
+To run the unit tests, clone the repository and run the following command from the root directory:
+
+```bash
+python -m unittest discover tests
+```
 
 ## Contributing
 This project is a basic implementation of a caching library for DynamoDB, and is open source. Feel free to submit issues or pull requests to improve it.
@@ -84,4 +120,9 @@ git checkout -b your-branch-name
 3. Make and test your changes
 4. Add new features and tests
 
-Disclaimer: DynaCache is not an official product or library provided by AWS. It is a third-party library developed to simplify the process of caching data in AWS DynamoDB.
+## License
+DynaCache is released under the MIT license.
+See LICENSE for more details.
+
+## Disclaimer
+DynaCache is not an official product or library provided by AWS. It is a third-party library developed to simplify the process of caching data in AWS DynamoDB.
